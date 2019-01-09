@@ -26,7 +26,7 @@ class ColorModel(QtCore.QObject):
     def color(self, color: QtGui.QColor) -> None:
         self._r = color.redF()
         self._g = color.greenF()
-        self._b = color.greenF()
+        self._b = color.blueF()
         self._sync_to_hsv()
         self.a = color.alphaF()
 
