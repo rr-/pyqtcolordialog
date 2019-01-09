@@ -2,17 +2,18 @@
 
 A drop-in replacement of `QColorDialog` for `PyQt5`.
 
-Before:
-
-![](docs/old2.png)
-
-After:
-
-![](docs/new2.png)
-
-Animated version:
-
 ![](docs/demo.webp)
+
+<table>
+    <tr>
+        <th>Before:</th>
+        <th>After:</th>
+    </tr>
+    <tr>
+        <td><img src='docs/old2.png'/></td>
+        <td><img src='docs/new2.png'/></td>
+    </tr>
+</table>
 
 ## Installation
 
