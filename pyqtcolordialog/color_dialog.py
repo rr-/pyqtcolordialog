@@ -162,18 +162,28 @@ class QColorDialog(QtWidgets.QDialog):
     def selectedColor(self) -> QtGui.QColor:
         return self._model.color
 
+    def alphaGrid(self) -> QtGui.QPixmap:
+        return self._alpha_grid
+
+    def setAlphaGrid(self, alpha_grid: QtGui.QPixmap) -> None:
+        self._alpha_grid.convertFromImage(alpha_grid.toImage())
+        self.update()
+
     @staticmethod
     def getColor(
         initial: T.Optional[QtGui.QColor] = None,
         parent: T.Optional[QtWidgets.QWidget] = None,
         title: T.Optional[str] = None,
         options: T.Optional[QtWidgets.QColorDialog.ColorDialogOptions] = None,
+        alpha_grid: T.Optional[QtGui.QPixmap] = None,
     ) -> QtGui.QColor:
         dialog = QColorDialog(initial, parent)
         if title is not None:
             dialog.setWindowTitle(title)
         if options is not None:
             dialog.setOptions(options)
+        if alpha_grid is not None:
+            dialog.setAlphaGrid(alpha_grid)
         ret = dialog.exec_()
         if ret == QtWidgets.QDialog.Accepted:
             return dialog.selectedColor()
