@@ -8,7 +8,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .color_model import ColorModel, black_or_white
 from .geometry import point_in_ring, point_in_triangle
-from .util import is_imprecise_click, is_precise_click
+from .util import blend, is_imprecise_click, is_precise_click
 
 
 class ColorRing(QtWidgets.QWidget):
@@ -239,6 +239,9 @@ class ColorRing(QtWidgets.QWidget):
         painter.setRenderHint(painter.Antialiasing)
 
         p1, p2, p3 = self._get_triangle_points(use_transform=False)
+        p1c = QtGui.QColor.fromHsvF(self._model.h, 1, 1)
+        p2c = QtGui.QColor.fromHsvF(self._model.h, 1, 0)
+        p3c = QtGui.QColor.fromHsvF(self._model.h, 0, 1)
 
         painter.setPen(QtCore.Qt.NoPen)
         painter.setBrush(QtCore.Qt.black)
@@ -247,12 +250,11 @@ class ColorRing(QtWidgets.QWidget):
         painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceAtop)
 
         for y in range(0, height):
-            x1 = 0.5 - (y / height) / 2
+            ratio = y / height
+            x1 = (1 - ratio) / 2
             x2 = 1 - x1
-            c1 = QtGui.QColor.fromHsvF(
-                self._model.h, 1 - y / height, 1 - y / height
-            )
-            c2 = QtGui.QColor.fromHsvF(self._model.h, 1 - y / height, 1)
+            c1 = blend(p1c, p2c, ratio)
+            c2 = blend(p1c, p3c, ratio)
 
             gradient = QtGui.QLinearGradient(x1 * side, y, x2 * side, y)
             gradient.setColorAt(0, c1)

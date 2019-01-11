@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 def is_precise_click(
@@ -15,3 +15,11 @@ def is_imprecise_click(
     return (
         button & style.styleHint(QtWidgets.QStyle.SH_Slider_PageSetButtons)
     ) == button
+
+
+def blend(c1: QtGui.QColor, c2: QtGui.QColor, ratio: float) -> QtGui.QColor:
+    return QtGui.QColor.fromRgbF(
+        c1.redF() * (1 - ratio) + c2.redF() * ratio,
+        c1.greenF() * (1 - ratio) + c2.greenF() * ratio,
+        c1.blueF() * (1 - ratio) + c2.blueF() * ratio,
+    )
