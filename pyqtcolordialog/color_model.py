@@ -1,4 +1,5 @@
 import math
+import typing as T
 
 from PyQt5 import QtCore, QtGui
 

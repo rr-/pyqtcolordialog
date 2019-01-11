@@ -1,11 +1,10 @@
 import functools
-import math
 import typing as T
 from pathlib import Path
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from .color_model import ColorModel, black_or_white
+from .color_model import ColorModel
 from .color_preview import ColorPreview
 from .color_ring import ColorRing
 from .color_sliders import (
@@ -18,7 +17,6 @@ from .color_sliders import (
     ValueColorControl,
 )
 from .color_square import ColorSquare, ColorSquareStyle
-from .util import is_imprecise_click, is_precise_click
 
 
 class ButtonStrip(QtWidgets.QDialogButtonBox):

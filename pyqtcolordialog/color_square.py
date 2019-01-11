@@ -1,11 +1,8 @@
 import enum
-import math
-import typing as T
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .color_model import ColorModel, black_or_white
-from .geometry import point_in_ring, point_in_triangle
 from .util import is_imprecise_click, is_precise_click
 
 
