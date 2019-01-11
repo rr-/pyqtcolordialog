@@ -125,6 +125,7 @@ class QColorDialog(QtWidgets.QDialog):
         self._model.changed.connect(self._emit_signal)
 
         self.setWindowTitle("Select color")
+        self.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         self.show()
 
     def options(self) -> QtWidgets.QColorDialog.ColorDialogOptions:
