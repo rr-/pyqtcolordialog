@@ -2,18 +2,21 @@
 
 A drop-in replacement of `QColorDialog` for `PyQt5`.
 
-![](docs/demo.webp)
+![](docs/new.png)
 
-<table>
-    <tr>
-        <th>Before:</th>
-        <th>After:</th>
-    </tr>
-    <tr>
-        <td><img src='docs/old2.png'/></td>
-        <td><img src='docs/new2.png'/></td>
-    </tr>
-</table>
+For comparison, here's the default Qt color picker:
+
+![](docs/old.png)
+
+## Video preview
+
+Ring mode (default):
+
+[![](docs/ring.png)](https://rawcdn.githack.com/rr-/pyqtcolordialog/db9db87510bb855bf25cdd88eb051c9e9ca4f06d/docs/ring.webm)
+
+Square mode:
+
+[![](docs/square.png)](https://rawcdn.githack.com/rr-/pyqtcolordialog/db9db87510bb855bf25cdd88eb051c9e9ca4f06d/docs/square.webm)
 
 ## Installation
 
