@@ -108,7 +108,7 @@ class SlidersControl(QtWidgets.QWidget):
 
         self.alpha_widgets = [
             QtWidgets.QFrame(self),
-            QtWidgets.QLabel("Transparency:", self),
+            QtWidgets.QLabel("Opacity:", self),
             AlphaColorControl(self, model, alpha_grid),
         ]
         layout.addWidget(self.alpha_widgets[0], 7, 0, 1, 2)
