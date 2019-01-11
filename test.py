@@ -15,7 +15,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-alpha", action="store_false", dest="alpha")
     parser.add_argument("--buttons", action="store_true")
     parser.add_argument("--no-buttons", action="store_false", dest="buttons")
-    parser.set_defaults(alpha=True, buttons=True)
+    parser.add_argument("--square", action="store_true")
+    parser.add_argument("--no-square", action="store_false", dest="square")
+    parser.set_defaults(alpha=True, buttons=True, square=False)
     return parser.parse_args()
 
 
@@ -42,6 +44,7 @@ def main() -> None:
         initial=QtGui.QColor(202, 224, 250),
         title="Fancy title...",
         options=options,
+        use_square_view=args.square,
     )
 
     print(color.isValid())

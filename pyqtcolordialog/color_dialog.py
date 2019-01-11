@@ -17,6 +17,7 @@ from .color_sliders import (
     SaturationColorControl,
     ValueColorControl,
 )
+from .color_square import ColorSquare, ColorSquareStyle
 from .util import is_imprecise_click, is_precise_click
 
 
@@ -31,6 +32,23 @@ class ButtonStrip(QtWidgets.QDialogButtonBox):
         self.button(self.Reset).clicked.connect(self.reset.emit)
 
 
+class ClickableLabel(QtWidgets.QLabel):
+    pressed = QtCore.pyqtSignal()
+    released = QtCore.pyqtSignal()
+
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        if event.button() != QtCore.Qt.LeftButton:
+            event.ignore()
+        event.accept()
+        self.pressed.emit()
+
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
+        if event.button() != QtCore.Qt.LeftButton:
+            event.ignore()
+        event.accept()
+        self.released.emit()
+
+
 class SlidersControl(QtWidgets.QWidget):
     def __init__(
         self,
@@ -43,17 +61,47 @@ class SlidersControl(QtWidgets.QWidget):
         layout.setSpacing(8)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.addWidget(QtWidgets.QLabel("Hue:", self), 0, 1)
-        layout.addWidget(QtWidgets.QLabel("Saturation:", self), 1, 1)
-        layout.addWidget(QtWidgets.QLabel("Value:", self), 2, 1)
+        def mouse_down(radio_button: QtWidgets.QRadioButton) -> None:
+            radio_button.setDown(True)
+
+        def mouse_up(radio_button: QtWidgets.QRadioButton) -> None:
+            radio_button.setDown(False)
+            radio_button.setChecked(True)
+            radio_button.clicked.emit()
+
+        self.radio_buttons = {
+            square_style: QtWidgets.QRadioButton(self)
+            for square_style in ColorSquareStyle
+        }
+        self.labels = {
+            square_style: ClickableLabel(square_style.name.title() + ":", self)
+            for square_style in ColorSquareStyle
+        }
+
+        for label, radio_button in zip(
+            self.labels.values(), self.radio_buttons.values()
+        ):
+            label.pressed.connect(functools.partial(mouse_down, radio_button))
+            label.released.connect(functools.partial(mouse_up, radio_button))
+
+        layout.addWidget(self.radio_buttons[ColorSquareStyle.Hue], 0, 0)
+        layout.addWidget(self.radio_buttons[ColorSquareStyle.Saturation], 1, 0)
+        layout.addWidget(self.radio_buttons[ColorSquareStyle.Value], 2, 0)
+        layout.addWidget(self.labels[ColorSquareStyle.Hue], 0, 1)
+        layout.addWidget(self.labels[ColorSquareStyle.Saturation], 1, 1)
+        layout.addWidget(self.labels[ColorSquareStyle.Value], 2, 1)
         layout.addWidget(HueColorControl(self, model, alpha_grid), 0, 2)
         layout.addWidget(SaturationColorControl(self, model, alpha_grid), 1, 2)
         layout.addWidget(ValueColorControl(self, model, alpha_grid), 2, 2)
 
         layout.addWidget(QtWidgets.QFrame(self), 3, 1, 1, 2)
-        layout.addWidget(QtWidgets.QLabel("Red:", self), 4, 1)
-        layout.addWidget(QtWidgets.QLabel("Green:", self), 5, 1)
-        layout.addWidget(QtWidgets.QLabel("Blue:", self), 6, 1)
+
+        layout.addWidget(self.radio_buttons[ColorSquareStyle.Red], 4, 0)
+        layout.addWidget(self.radio_buttons[ColorSquareStyle.Green], 5, 0)
+        layout.addWidget(self.radio_buttons[ColorSquareStyle.Blue], 6, 0)
+        layout.addWidget(self.labels[ColorSquareStyle.Red], 4, 1)
+        layout.addWidget(self.labels[ColorSquareStyle.Green], 5, 1)
+        layout.addWidget(self.labels[ColorSquareStyle.Blue], 6, 1)
         layout.addWidget(RedColorControl(self, model, alpha_grid), 4, 2)
         layout.addWidget(GreenColorControl(self, model, alpha_grid), 5, 2)
         layout.addWidget(BlueColorControl(self, model, alpha_grid), 6, 2)
@@ -63,7 +111,7 @@ class SlidersControl(QtWidgets.QWidget):
             QtWidgets.QLabel("Transparency:", self),
             AlphaColorControl(self, model, alpha_grid),
         ]
-        layout.addWidget(self.alpha_widgets[0], 7, 1, 1, 2)
+        layout.addWidget(self.alpha_widgets[0], 7, 0, 1, 2)
         layout.addWidget(self.alpha_widgets[1], 8, 1)
         layout.addWidget(self.alpha_widgets[2], 8, 2)
 
@@ -88,6 +136,7 @@ class QColorDialog(QtWidgets.QDialog):
             initial if initial is not None else QtGui.QColor(255, 255, 255)
         )
 
+        self._use_square_view = False
         self._initial = initial
         self._model = ColorModel(initial)
         self._options = (
@@ -97,6 +146,7 @@ class QColorDialog(QtWidgets.QDialog):
             str(Path(__file__).parent / "grid.png")
         )
 
+        self._color_square = ColorSquare(self, self._model)
         self._color_ring = ColorRing(self, self._model)
         self._color_preview = ColorPreview(
             self, initial, self._model, self._alpha_grid
@@ -107,6 +157,7 @@ class QColorDialog(QtWidgets.QDialog):
         left_layout = QtWidgets.QVBoxLayout()
         left_layout.setSpacing(16)
         left_layout.setContentsMargins(0, 0, 16, 0)
+        left_layout.addWidget(self._color_square)
         left_layout.addWidget(self._color_ring)
         left_layout.addWidget(self._color_preview)
 
@@ -119,6 +170,16 @@ class QColorDialog(QtWidgets.QDialog):
         root_layout.addLayout(left_layout)
         root_layout.addLayout(right_layout)
 
+        self._sliders.radio_buttons[
+            self._color_square.square_style
+        ].setChecked(True)
+
+        for square_style, radio_button in self._sliders.radio_buttons.items():
+            radio_button.clicked.connect(
+                functools.partial(
+                    self._color_square.set_square_style, square_style
+                )
+            )
         self._strip.accepted.connect(self.accept)
         self._strip.rejected.connect(self.reject)
         self._strip.reset.connect(self.reset)
@@ -170,12 +231,20 @@ class QColorDialog(QtWidgets.QDialog):
         self._alpha_grid.convertFromImage(alpha_grid.toImage())
         self.update()
 
+    def useSquareView(self) -> bool:
+        return self._use_square_view
+
+    def setUseSquareView(self, use_square_view: bool) -> None:
+        self._use_square_view = use_square_view
+        self._update_options()
+
     @staticmethod
     def getColor(
         initial: T.Optional[QtGui.QColor] = None,
         parent: T.Optional[QtWidgets.QWidget] = None,
         title: T.Optional[str] = None,
         options: T.Optional[QtWidgets.QColorDialog.ColorDialogOptions] = None,
+        use_square_view: T.Optional[bool] = False,
         alpha_grid: T.Optional[QtGui.QPixmap] = None,
     ) -> QtGui.QColor:
         dialog = QColorDialog(initial, parent)
@@ -185,6 +254,8 @@ class QColorDialog(QtWidgets.QDialog):
             dialog.setOptions(options)
         if alpha_grid is not None:
             dialog.setAlphaGrid(alpha_grid)
+        if use_square_view is not None:
+            dialog.setUseSquareView(use_square_view)
         ret = dialog.exec_()
         if ret == QtWidgets.QDialog.Accepted:
             return dialog.selectedColor()
@@ -193,6 +264,10 @@ class QColorDialog(QtWidgets.QDialog):
     def _update_options(self) -> None:
         for widget in self._sliders.alpha_widgets:
             widget.setVisible(self._options & self.ShowAlphaChannel)
+        self._color_square.setVisible(self._use_square_view)
+        self._color_ring.setVisible(not self._use_square_view)
+        for widget in self._sliders.radio_buttons.values():
+            widget.setVisible(self._use_square_view)
         self._strip.setVisible(not self._options & self.NoButtons)
 
     def _emit_signal(self) -> None:

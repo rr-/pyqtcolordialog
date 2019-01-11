@@ -18,22 +18,25 @@ class ColorPreview(QtWidgets.QFrame):
         self._model = model
         self._alpha_grid = alpha_grid
 
-        self.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
-
         self._model.changed.connect(self.update)
+
+        self.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
 
     def sizeHint(self) -> T.Tuple[int, int]:
         return QtCore.QSize(300, 50)
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
-        left = self.frameRect()
+        rect = self.rect()
+        rect -= QtCore.QMargins(*[self.lineWidth()] * 4)
+
+        left = QtCore.QRect(rect)
         left.setWidth(left.width() // 2)
-        right = self.frameRect()
+        right = QtCore.QRect(rect)
         right.setLeft(left.width())
 
         painter = QtGui.QPainter()
         painter.begin(self)
-        painter.drawTiledPixmap(self.frameRect(), self._alpha_grid)
+        painter.drawTiledPixmap(rect, self._alpha_grid)
         self._draw_color(painter, left, self._orig_color)
         self._draw_color(painter, right, self._model.color)
         painter.end()

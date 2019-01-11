@@ -246,7 +246,7 @@ class ColorRing(QtWidgets.QWidget):
         painter.drawPolygon(p1, p2, p3)
         painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceAtop)
 
-        for y in range(0, height, 1):
+        for y in range(0, height):
             x1 = 0.5 - (y / height) / 2
             x2 = 1 - x1
             c1 = QtGui.QColor.fromHsvF(
