@@ -17,17 +17,22 @@ from .color_sliders import (
     ValueColorControl,
 )
 from .color_square import ColorSquare, ColorSquareStyle
+from .screen_color_picker import ScreenColorPicker
 
 
 class ButtonStrip(QtWidgets.QDialogButtonBox):
     reset = QtCore.pyqtSignal()
+    pick = QtCore.pyqtSignal()
 
     def __init__(self, parent: QtWidgets.QWidget) -> None:
         super().__init__(parent)
+        pick_button = QtWidgets.QPushButton("Pick screen color")
         self.addButton(self.Reset)
+        self.addButton(pick_button, self.ActionRole)
         self.addButton(self.Ok)
         self.addButton(self.Cancel)
         self.button(self.Reset).clicked.connect(self.reset.emit)
+        pick_button.clicked.connect(self.pick.emit)
 
 
 class ClickableLabel(QtWidgets.QLabel):
@@ -137,6 +142,7 @@ class QColorDialog(QtWidgets.QDialog):
         self._use_square_view = False
         self._initial = initial
         self._model = ColorModel(initial)
+        self._screen_color_picker = ScreenColorPicker(self._model, self)
         self._options = (
             QtWidgets.QColorDialog.ColorDialogOptions() | self.ShowAlphaChannel
         )
@@ -181,6 +187,7 @@ class QColorDialog(QtWidgets.QDialog):
         self._strip.accepted.connect(self.accept)
         self._strip.rejected.connect(self.reject)
         self._strip.reset.connect(self.reset)
+        self._strip.pick.connect(self._screen_color_picker.pick_screen_color)
         self._model.changed.connect(self._emit_signal)
 
         self.setWindowTitle("Select color")
