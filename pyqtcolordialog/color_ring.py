@@ -1,14 +1,12 @@
-# X,Y to S,V mapping inside the triangle selector is taken
-# from GTK2 color dialog and was written by Simon Budig.
-
 import math
+import sys
 import typing as T
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .color_model import ColorModel, black_or_white
 from .geometry import point_in_ring, point_in_triangle
-from .util import blend, is_imprecise_click, is_precise_click
+from .util import blend, clamp, is_imprecise_click, is_precise_click
 
 
 class ColorRing(QtWidgets.QWidget):
@@ -84,53 +82,26 @@ class ColorRing(QtWidgets.QWidget):
     def _sync_value_and_saturation_from_triangle(
         self, pos: QtCore.QPoint
     ) -> None:
-        p = pos
-        p1, p2, p3 = self._get_triangle_points()
+        transform, _ = self._get_triangle_transform().inverted()
+        pos = transform.map(pos)
 
-        center_x = self.rect().center().x()
-        center_y = self.rect().center().y()
+        height = self._triangle_height
+        side = self._triangle_side
 
-        x = pos.x() - center_x
-        hx = p1.x() - center_x
-        sx = p2.x() - center_x
-        vx = p3.x() - center_x
+        p1c, p2c, p3c = self._get_triangle_colors()
+        y_ratio = pos.y() / height
+        y_ratio = clamp(y_ratio, 0, 1)
+        x1 = (1 - y_ratio) / 2
+        x2 = 1 - x1
+        x_ratio = ((pos.x() / side) - x1) / max(sys.float_info.min, x2 - x1)
+        x_ratio = clamp(x_ratio, 0, 1)
 
-        y = center_y - pos.y()
-        hy = center_y - p1.y()
-        sy = center_y - p2.y()
-        vy = center_y - p3.y()
+        y_c1 = blend(p1c, p2c, y_ratio)
+        y_c2 = blend(p1c, p3c, y_ratio)
+        x_c = blend(y_c1, y_c2, x_ratio)
 
-        if vx * (x - sx) + vy * (y - sy) < 0.0:
-            self._model.s = 1.0
-            self._model.v = ((x - sx) * (hx - sx) + (y - sy) * (hy - sy)) / (
-                (hx - sx) * (hx - sx) + (hy - sy) * (hy - sy)
-            )
-
-        elif hx * (x - sx) + hy * (y - sy) < 0.0:
-            self._model.s = 0.0
-            self._model.v = ((x - sx) * (vx - sx) + (y - sy) * (vy - sy)) / (
-                (vx - sx) * (vx - sx) + (vy - sy) * (vy - sy)
-            )
-        elif sx * (x - hx) + sy * (y - hy) < 0.0:
-            self._model.v = 1.0
-            self._model.s = ((x - vx) * (hx - vx) + (y - vy) * (hy - vy)) / (
-                (hx - vx) * (hx - vx) + (hy - vy) * (hy - vy)
-            )
-        else:
-            v = ((x - sx) * (hy - vy) - (y - sy) * (hx - vx)) / (
-                (vx - sx) * (hy - vy) - (vy - sy) * (hx - vx)
-            )
-
-            if v <= 0.0:
-                self._model.v = 0.0
-                self._model.s = 0.0
-            else:
-                self._model.v = v
-
-                if abs(hy - vy) < abs(hx - vx):
-                    self._model.s = (x - sx - v * (vx - sx)) / (v * (hx - vx))
-                else:
-                    self._model.s = (y - sy - v * (vy - sy)) / (v * (hy - vy))
+        self._model.s = x_c.saturationF()
+        self._model.v = x_c.valueF()
 
     def _sync_hue_from_ring(self, pos: QtCore.QPoint) -> None:
         pos -= self.rect().center()
@@ -181,6 +152,14 @@ class ColorRing(QtWidgets.QWidget):
             p2 = transform.map(p2)
             p3 = transform.map(p3)
         return (p1, p2, p3)
+
+    def _get_triangle_colors(
+        self
+    ) -> T.Tuple[QtGui.QColor, QtGui.QColor, QtGui.QColor]:
+        p1c = QtGui.QColor.fromHsvF(self._model.h, 1, 1)
+        p2c = QtGui.QColor.fromHsvF(self._model.h, 1, 0)
+        p3c = QtGui.QColor.fromHsvF(self._model.h, 0, 1)
+        return (p1c, p2c, p3c)
 
     def _draw_ring(self) -> QtGui.QImage:
         image = QtGui.QImage(
@@ -239,9 +218,7 @@ class ColorRing(QtWidgets.QWidget):
         painter.setRenderHint(painter.Antialiasing)
 
         p1, p2, p3 = self._get_triangle_points(use_transform=False)
-        p1c = QtGui.QColor.fromHsvF(self._model.h, 1, 1)
-        p2c = QtGui.QColor.fromHsvF(self._model.h, 1, 0)
-        p3c = QtGui.QColor.fromHsvF(self._model.h, 0, 1)
+        p1c, p2c, p3c = self._get_triangle_colors()
 
         painter.setPen(QtCore.Qt.NoPen)
         painter.setBrush(QtCore.Qt.black)
