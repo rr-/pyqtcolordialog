@@ -5,7 +5,7 @@ setup(
     author_email="rr-@sakuya.pl",
     name="pyqtcolordialog",
     description=("An improved color dialog for PyQt5"),
-    version="0.1",
+    version="0.2",
     url="https://github.com/rr-/pyqtcolordialog",
     packages=find_packages(),
     install_requires=["PyQt5"],
