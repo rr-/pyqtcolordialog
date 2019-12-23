@@ -10,7 +10,7 @@ setup(
     packages=find_packages(),
     install_requires=["PyQt5"],
     package_dir={"pyqtcolordialog": "pyqtcolordialog"},
-    package_data={"pyqtcolordialog": ["*.png"]},
+    package_data={"pyqtcolordialog": ["*.png", "../LICENSE.md"]},
     classifiers=[
         "Environment :: X11 Applications :: Qt",
         "Development Status :: 4 - Beta",
